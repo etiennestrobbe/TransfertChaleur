@@ -1,4 +1,4 @@
-package org.yolo.etienne.strobbe.transfertchaleur;
+package org.yolo.etienne.strobbe.transfertchaleur.modele;
 
 import junit.framework.TestCase;
 
