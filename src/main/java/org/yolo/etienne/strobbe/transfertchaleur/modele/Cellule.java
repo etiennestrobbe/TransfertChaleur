@@ -37,4 +37,9 @@ public class Cellule {
     public Double getTemperature() {
         return this.temperature;
     }
+
+    @Override
+    public String toString() {
+        return temperature + "";
+    }
 }

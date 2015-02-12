@@ -24,8 +24,9 @@ public enum Materiau {
                 return 0.84;
             case GRANITE:
                 return 2.2;
+            default:
+                return -1.0;
         }
-        return -1;
     }
 
     /**
@@ -42,8 +43,9 @@ public enum Materiau {
                 return 1400;
             case GRANITE:
                 return 2700;
+            default:
+                return -1;
         }
-        return -1;
     }
 
     /**
@@ -60,7 +62,8 @@ public enum Materiau {
                 return 840;
             case GRANITE:
                 return 790;
+            default:
+                return -1;
         }
-        return -1;
     }
 }
