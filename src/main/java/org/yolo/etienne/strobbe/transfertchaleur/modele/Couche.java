@@ -53,4 +53,14 @@ public class Couche {
     public int length() {
         return couche.size();
     }
+
+    @Override
+    public String toString() {
+        String res = "";
+        for (int i = 0; i < this.couche.size() - 1; i++) {
+            res += couche.get(i).toString() + ",";
+        }
+        res += couche.get(couche.size() - 1).toString();
+        return res;
+    }
 }
