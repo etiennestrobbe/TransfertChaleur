@@ -18,6 +18,12 @@ public class CelluleTest extends TestCase {
         assertEquals(this.cellule.getTemperature(), newTemp);
     }
 
+    public void testGetMateriau() throws Exception {
+        assertEquals(new Cellule(Materiau.BRIQUE).getMateriau(), Materiau.BRIQUE);
+        assertEquals(new Cellule(Materiau.LAINE_DE_VERRE).getMateriau(), Materiau.LAINE_DE_VERRE);
+        assertEquals(new Cellule(Materiau.GRANITE).getMateriau(), Materiau.GRANITE);
+    }
+
     public void testToString() throws Exception {
         assertNotNull(cellule);
         assertEquals(cellule.toString(), "-1.0");

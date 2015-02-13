@@ -38,6 +38,15 @@ public class Cellule {
         return this.temperature;
     }
 
+    /**
+     * Getter
+     *
+     * @return le materiau de la cellule
+     */
+    public Materiau getMateriau() {
+        return this.materiau;
+    }
+
     @Override
     public String toString() {
         return temperature + "";

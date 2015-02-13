@@ -9,7 +9,7 @@ import java.util.List;
  */
 public class Couche {
 
-    private List<Cellule> couche;
+    private List<Cellule> cellules;
 
     /**
      * Constructeur
@@ -18,9 +18,9 @@ public class Couche {
      * @param materiau
      */
     public Couche(int taille, Materiau materiau) {
-        this.couche = new ArrayList<Cellule>();
+        this.cellules = new ArrayList<Cellule>();
         for (int i = 0; i < taille; i++) {
-            couche.add(new Cellule(materiau));
+            cellules.add(new Cellule(materiau));
         }
     }
 
@@ -31,7 +31,7 @@ public class Couche {
      * @param temp la nouvelle température de la cellule
      */
     public void setTemperature(int id, double temp) {
-        this.couche.get(id).setTemperature(temp);
+        this.cellules.get(id).setTemperature(temp);
     }
 
     /**
@@ -41,7 +41,7 @@ public class Couche {
      * @return la température de la cellule
      */
     public Double getTemperature(int id) {
-        return this.couche.get(id).getTemperature();
+        return this.cellules.get(id).getTemperature();
     }
 
     /**
@@ -51,16 +51,16 @@ public class Couche {
      * @return taille de la couche
      */
     public int length() {
-        return couche.size();
+        return cellules.size();
     }
 
     @Override
     public String toString() {
         String res = "";
-        for (int i = 0; i < this.couche.size() - 1; i++) {
-            res += couche.get(i).toString() + ",";
+        for (int i = 0; i < this.cellules.size() - 1; i++) {
+            res += cellules.get(i).toString() + ",";
         }
-        res += couche.get(couche.size() - 1).toString();
+        res += cellules.get(cellules.size() - 1).toString();
         return res;
     }
 }

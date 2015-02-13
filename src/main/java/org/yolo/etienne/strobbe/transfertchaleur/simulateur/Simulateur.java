@@ -8,7 +8,7 @@ import org.yolo.etienne.strobbe.transfertchaleur.modele.Mur;
 public class Simulateur {
     private Mur murCourant;
     private Mur murSuivant;
-    private Double C = 1.0;
+    private Double constanteC = 1.0;
 
     public Simulateur() {
         this.murCourant = new Mur();
