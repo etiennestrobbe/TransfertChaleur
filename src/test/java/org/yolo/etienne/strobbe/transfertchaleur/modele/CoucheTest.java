@@ -31,4 +31,10 @@ public class CoucheTest extends TestCase {
         assertNotNull(couche);
         assertEquals(couche.length(), SIZE);
     }
+
+    public void testToString() throws Exception {
+        assertNotNull(couche);
+        String expected = "-1.0,-1.0,-1.0,-1.0,-1.0,-1.0,-1.0,-1.0,-1.0,-1.0,-1.0,-1.0,-1.0,-1.0,-1.0";
+        assertEquals(new Couche(SIZE, Materiau.BRIQUE).toString(), expected);
+    }
 }

@@ -18,4 +18,9 @@ public class CelluleTest extends TestCase {
         assertEquals(this.cellule.getTemperature(), newTemp);
     }
 
+    public void testToString() throws Exception {
+        assertNotNull(cellule);
+        assertEquals(cellule.toString(), "-1.0");
+    }
+
 }
