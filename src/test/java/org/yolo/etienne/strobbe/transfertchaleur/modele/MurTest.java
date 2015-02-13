@@ -26,4 +26,9 @@ public class MurTest extends TestCase {
         assertNotNull(mur);
         assertEquals(mur.toString(), MUR_NOT_INIT);
     }
+
+    public void testGetTemp() throws Exception {
+        assertNotNull(mur);
+        //mur
+    }
 }

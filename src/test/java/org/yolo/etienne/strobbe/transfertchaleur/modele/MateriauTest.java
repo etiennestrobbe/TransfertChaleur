@@ -8,6 +8,7 @@ public class MateriauTest extends TestCase {
 
     public void setUp() throws Exception {
         super.setUp();
+        materiau = Materiau.BRIQUE;
 
     }
 
@@ -19,6 +20,7 @@ public class MateriauTest extends TestCase {
         assertEquals(Materiau.LAINE_DE_VERRE.getLambda(), 0.04);
         assertEquals(Materiau.BRIQUE.getLambda(), 0.84);
         assertEquals(Materiau.GRANITE.getLambda(), 2.2);
+        assertEquals(materiau.getLambda(), 0.84);
 
     }
 
