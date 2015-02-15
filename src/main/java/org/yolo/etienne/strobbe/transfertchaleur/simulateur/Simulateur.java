@@ -21,6 +21,13 @@ public class Simulateur {
         this.murSuivant = new Mur();
     }
 
+    /**
+     * Calcule la constante C pour la formule de calcul de température
+     * selon un certain matériau
+     *
+     * @param materiau
+     * @return
+     */
     private Double getconstanteC(Materiau materiau) {
         return (materiau.getLambda() * Constantes.DT) / (materiau.getRho() * materiau.getC() * Constantes.DX * Constantes.DX);
     }
@@ -28,6 +35,7 @@ public class Simulateur {
     private void update(int pos) {
         //TODO faire le calcul pour une seule cellule
         Double newTemp;
+        Double constanteC = getconstanteC(murCourant.getMateriau(pos));
 
         //  C = ( lambda * dt ) / ( rho * c * dx * dx)
         //newTemp = T(x,t) + C*(T(x+1,t) + T(x-1,t) - 2T(x,t))

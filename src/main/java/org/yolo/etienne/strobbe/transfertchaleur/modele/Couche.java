@@ -54,6 +54,15 @@ public class Couche {
         return cellules.size();
     }
 
+    /**
+     * Getter
+     *
+     * @return le materiau de la couche
+     */
+    public Materiau getMateriau() {
+        return cellules.get(0).getMateriau();
+    }
+
     @Override
     public String toString() {
         String res = "";

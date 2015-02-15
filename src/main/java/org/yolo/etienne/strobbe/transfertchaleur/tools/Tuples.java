@@ -11,4 +11,12 @@ public class Tuples<X, Y> {
         this.x = x;
         this.y = y;
     }
+
+    public Y getY() {
+        return y;
+    }
+
+    public X getX() {
+        return x;
+    }
 }

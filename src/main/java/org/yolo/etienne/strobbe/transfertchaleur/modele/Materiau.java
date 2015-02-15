@@ -8,7 +8,8 @@ package org.yolo.etienne.strobbe.transfertchaleur.modele;
 public enum Materiau {
     LAINE_DE_VERRE,
     BRIQUE,
-    GRANITE;
+    GRANITE,
+    DEFAULT;
 
     /**
      * Récupère la valeur lambda du materiau
@@ -24,6 +25,8 @@ public enum Materiau {
                 return 0.84;
             case GRANITE:
                 return 2.2;
+            case DEFAULT:
+                return 1.0;
             default:
                 return -1.0;
         }
@@ -43,6 +46,8 @@ public enum Materiau {
                 return 1400;
             case GRANITE:
                 return 2700;
+            case DEFAULT:
+                return 1;
             default:
                 return -1;
         }
@@ -62,6 +67,8 @@ public enum Materiau {
                 return 840;
             case GRANITE:
                 return 790;
+            case DEFAULT:
+                return 1;
             default:
                 return -1;
         }

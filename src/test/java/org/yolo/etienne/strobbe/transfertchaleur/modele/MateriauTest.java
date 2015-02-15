@@ -20,6 +20,7 @@ public class MateriauTest extends TestCase {
         assertEquals(Materiau.LAINE_DE_VERRE.getLambda(), 0.04);
         assertEquals(Materiau.BRIQUE.getLambda(), 0.84);
         assertEquals(Materiau.GRANITE.getLambda(), 2.2);
+        assertEquals(Materiau.DEFAULT.getLambda(), 1.0);
         assertEquals(materiau.getLambda(), 0.84);
 
     }
@@ -28,6 +29,7 @@ public class MateriauTest extends TestCase {
         assertEquals(Materiau.LAINE_DE_VERRE.getRho(), 30);
         assertEquals(Materiau.BRIQUE.getRho(), 1400);
         assertEquals(Materiau.GRANITE.getRho(), 2700);
+        assertEquals(Materiau.DEFAULT.getRho(), 1);
 
     }
 
@@ -35,6 +37,7 @@ public class MateriauTest extends TestCase {
         assertEquals(Materiau.LAINE_DE_VERRE.getC(), 900);
         assertEquals(Materiau.BRIQUE.getC(), 840);
         assertEquals(Materiau.GRANITE.getC(), 790);
+        assertEquals(Materiau.DEFAULT.getC(), 1);
 
     }
 }

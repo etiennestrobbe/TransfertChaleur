@@ -1,7 +1,8 @@
 package org.yolo.etienne.strobbe.transfertchaleur.tools;
 
 /**
- * Created by Etienne on 13-Feb-15.
+ * @author Etienne Strobbe
+ * Liste des constantes utilisées dans la simulation.
  */
 public class Constantes {
     public static double DT = 0.01;
