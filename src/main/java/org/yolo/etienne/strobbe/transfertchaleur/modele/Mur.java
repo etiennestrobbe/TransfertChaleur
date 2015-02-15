@@ -86,6 +86,15 @@ public class Mur {
         return (id >= Constantes.SIZE_MUR) ? new Tuples<Boolean, Integer>(false, id - Constantes.SIZE_MUR) : new Tuples<Boolean, Integer>(true, id);
     }
 
+    /**
+     * Renvoi la dimension du mur
+     *
+     * @return la taille du mur
+     */
+    public int size() {
+        return murExterieur.length() + isolant.length();
+    }
+
     @Override
     public String toString() {
         return murExterieur + " - " + isolant + "\n";

@@ -1,5 +1,8 @@
 package org.yolo.etienne.strobbe.transfertchaleur.modele;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 /**
  * @author Etienne Strobbe
  *         Classe représentant la température d'une partie d'un mur quelconque à un instant et une position donnés.
@@ -49,6 +52,8 @@ public class Cellule {
 
     @Override
     public String toString() {
-        return temperature + "";
+        BigDecimal bd = new BigDecimal(temperature);
+        bd = bd.setScale(1, RoundingMode.HALF_UP);
+        return bd.doubleValue() + "";
     }
 }
