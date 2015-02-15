@@ -24,12 +24,16 @@
         <dependency>
             <groupId>org.yolo.etienne.strobbe.transfertchaleur.webbit</groupId>
             <artifactId>webbit</artifactId>
-            <version>1.0</version>
+            <version>0.4.15</version>
+            <scope>system</scope>
+            <systemPath>${basedir}/lib/webbit-0.4.15-full.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>org.yolo.etienne.strobbe.transfertchaleur.websocketserver</groupId>
             <artifactId>websocketserver</artifactId>
             <version>1.0</version>
+            <scope>system</scope>
+            <systemPath>${basedir}/lib/ProgConcWebSocketServer.jar</systemPath>
         </dependency>
     </dependencies>
 </project>
