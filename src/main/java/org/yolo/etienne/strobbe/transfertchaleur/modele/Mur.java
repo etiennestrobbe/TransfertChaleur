@@ -1,5 +1,6 @@
 package org.yolo.etienne.strobbe.transfertchaleur.modele;
 
+import org.yolo.etienne.strobbe.transfertchaleur.tools.BadIndexException;
 import org.yolo.etienne.strobbe.transfertchaleur.tools.Constantes;
 import org.yolo.etienne.strobbe.transfertchaleur.tools.Tuples;
 
@@ -43,7 +44,9 @@ public class Mur {
      */
     public Double getTemp(int id) {
         Tuples<Boolean, Integer> trueId = this.getIdCouche(id);
-        if (trueId.getY() == -1.0) return -1.0;
+        if (trueId.getY() == null) {
+            return -1.0;
+        }
         return (trueId.getX()) ? murExterieur.getTemperature(trueId.getY()) : isolant.getTemperature(trueId.getY());
     }
 
@@ -56,7 +59,9 @@ public class Mur {
      */
     public void setTemp(int id, Double newTemp) {
         Tuples<Boolean, Integer> trueId = this.getIdCouche(id);
-        if (trueId.getY() == -1) return;
+        if (trueId.getY() == -1) {
+            return;
+        }
         if (trueId.getX()) {
             murExterieur.setTemperature(trueId.getY(), newTemp);
         } else {
@@ -73,16 +78,19 @@ public class Mur {
      */
     public Materiau getMateriau(int id) {
         Tuples<Boolean, Integer> trueId = this.getIdCouche(id);
-        if (trueId.getY() == -1) {
-            System.err.println("Bad Index !");
-            return Materiau.DEFAULT;
+        if (trueId.getY() == null) {
+            throw new BadIndexException("Bad Index !");
         }
         return (trueId.getX()) ? murExterieur.getMateriau() : isolant.getMateriau();
     }
 
     private Tuples<Boolean, Integer> getIdCouche(int id) {
-        if (id < 0) return new Tuples<Boolean, Integer>(false, -1);
-        if (id >= (Constantes.SIZE_MUR + Constantes.SIZE_ISOLANT)) return new Tuples<Boolean, Integer>(false, -1);
+        if (id < 0) {
+            return new Tuples<Boolean, Integer>(false, null);
+        }
+        if (id >= (Constantes.SIZE_MUR + Constantes.SIZE_ISOLANT)) {
+            return new Tuples<Boolean, Integer>(false, null);
+        }
         return (id >= Constantes.SIZE_MUR) ? new Tuples<Boolean, Integer>(false, id - Constantes.SIZE_MUR) : new Tuples<Boolean, Integer>(true, id);
     }
 

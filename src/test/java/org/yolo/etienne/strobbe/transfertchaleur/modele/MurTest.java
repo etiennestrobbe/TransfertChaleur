@@ -1,6 +1,8 @@
 package org.yolo.etienne.strobbe.transfertchaleur.modele;
 
+import junit.framework.Assert;
 import junit.framework.TestCase;
+import org.yolo.etienne.strobbe.transfertchaleur.tools.BadIndexException;
 
 public class MurTest extends TestCase {
 
@@ -31,8 +33,19 @@ public class MurTest extends TestCase {
         assertNotNull(mur);
         assertEquals(mur.getMateriau(0), Materiau.BRIQUE);
         assertEquals(mur.getMateriau(5), Materiau.LAINE_DE_VERRE);
-        assertEquals(mur.getMateriau(-1), Materiau.DEFAULT);
-        assertEquals(mur.getMateriau(2000), Materiau.DEFAULT);
+
+        try {
+            assertEquals(mur.getMateriau(-1), Materiau.DEFAULT);
+        } catch (BadIndexException e) {
+            System.err.println(e.getLocalizedMessage());
+            Assert.assertTrue(true);
+        }
+        try {
+            assertEquals(mur.getMateriau(2000), Materiau.DEFAULT);
+        } catch (BadIndexException e) {
+            System.err.println(e.getLocalizedMessage());
+            Assert.assertTrue(true);
+        }
     }
 
     public void testGetTemp() throws Exception {

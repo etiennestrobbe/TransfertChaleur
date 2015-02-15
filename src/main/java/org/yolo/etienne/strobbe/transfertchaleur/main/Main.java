@@ -3,34 +3,14 @@ package org.yolo.etienne.strobbe.transfertchaleur.main;
 
 import org.yolo.etienne.strobbe.transfertchaleur.simulateur.Simulateur;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 public class Main {
-    /*public static void main(String[] args) {
-		JavaWebSocketServer.getInstance();// Init the server.
-        try {
-            Thread.sleep(6000);
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        Simulateur simulateur = new Simulateur();
-		
-		for(int i = 0; i < 200; i++) {
-            simulateur.time = i;
-		
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
 
-
-            String msg = simulateur.print();
-            System.out.println("emit message" + i + " : \n" + msg);
-			JavaWebSocketServer.getInstance().broadcastMessage(msg);
-            simulateur.update();
-		}
-	}*/
+    private static final Logger LOGGER = Logger.getLogger("Main");
+    private Main() {
+    }
 
     public static void sendMsg(Simulateur simulateur, int time, int pos) {
         String message = "<elt>";
@@ -42,16 +22,14 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        // TODO Auto-generated method stub
-        System.out.println("Début simulation");
+        LOGGER.log(Level.INFO, "Début simulation");
 
         JavaWebSocketServer.getInstance();// Init the server.
 
         try {
             Thread.sleep(10000);
         } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Thread.sleep a planté");
         }
 
         Simulateur simulateur = new Simulateur();
@@ -64,7 +42,7 @@ public class Main {
             }
             simulateur.reInit();
         }
-        System.out.println("fin simulation");
+        LOGGER.log(Level.INFO, "fin simulation");
 
     }
 }

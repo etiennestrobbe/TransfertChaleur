@@ -2,7 +2,11 @@ package org.yolo.etienne.strobbe.transfertchaleur.simulateur;
 
 import org.yolo.etienne.strobbe.transfertchaleur.modele.Materiau;
 import org.yolo.etienne.strobbe.transfertchaleur.modele.Mur;
+import org.yolo.etienne.strobbe.transfertchaleur.tools.BadIndexException;
 import org.yolo.etienne.strobbe.transfertchaleur.tools.Constantes;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * @author Etienne Strobbe
@@ -11,6 +15,7 @@ import org.yolo.etienne.strobbe.transfertchaleur.tools.Constantes;
 public class Simulateur {
     private Mur murCourant;
     private Mur murSuivant;
+    private static final Logger LOGGER = Logger.getLogger("Simulateur");
 
     /**
      * Constructeur
@@ -36,7 +41,13 @@ public class Simulateur {
     public Double update(int pos) {
         if (pos != 0 && pos != murCourant.size() - 1) {
             Double newTemp;
-            Double constanteC = getconstanteC(murCourant.getMateriau(pos));
+            Double constanteC;
+            try {
+                constanteC = getconstanteC(murCourant.getMateriau(pos));
+            } catch (BadIndexException e) {
+                LOGGER.log(Level.SEVERE, e.getLocalizedMessage());
+                constanteC = getconstanteC(Materiau.DEFAULT);
+            }
             newTemp = murCourant.getTemp(pos) + constanteC * (murCourant.getTemp(pos + 1) + murCourant.getTemp(pos - 1) - 2 * murCourant.getTemp(pos));
             murSuivant.setTemp(pos, newTemp);
             return newTemp;
@@ -52,23 +63,5 @@ public class Simulateur {
         return murCourant.size();
     }
 
-    /*public void update() {
-        this.msg = "";
-        //System.out.println("##################");
-        //System.out.print("MUR AVANT : " + murSuivant);
-
-        for (int i = 1; i < murCourant.size() - 1; i++) {
-            update(i);
-        }
-        murCourant = murSuivant;
-        murCourant.setTemp(0, 110.0);
-        //System.out.print("MUR APRES : "+murSuivant);
-        //System.out.println("##################");
-    }*/
-
-
-    public void affiche() {
-        System.out.println(murCourant);
-    }
 
 }
