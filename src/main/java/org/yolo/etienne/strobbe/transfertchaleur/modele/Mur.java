@@ -16,7 +16,7 @@ public class Mur {
      * Constructeur
      */
     public Mur() {
-        this.murExterieur = new Couche(Constantes.SIZE_MUR, Materiau.BRIQUE);
+        this.murExterieur = new Couche(Constantes.SIZE_MUR, Materiau.GRANITE);
         this.isolant = new Couche(Constantes.SIZE_ISOLANT, Materiau.LAINE_DE_VERRE);
     }
 

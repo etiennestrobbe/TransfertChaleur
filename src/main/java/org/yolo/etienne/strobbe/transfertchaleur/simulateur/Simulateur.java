@@ -4,6 +4,8 @@ import org.yolo.etienne.strobbe.transfertchaleur.modele.Materiau;
 import org.yolo.etienne.strobbe.transfertchaleur.modele.Mur;
 import org.yolo.etienne.strobbe.transfertchaleur.tools.Constantes;
 
+import java.util.Date;
+
 /**
  * @author Etienne Strobbe
  * Classe s'occupant de la simulation de transmission de chaleur. Tous les calculs sont effectués dans cette classe.
@@ -30,13 +32,20 @@ public class Simulateur {
      * @return
      */
     private Double getconstanteC(Materiau materiau) {
-        return (materiau.getLambda() * Constantes.DT) / (materiau.getRho() * materiau.getC() * Constantes.DX * Constantes.DX);
+        //Double prout = (materiau.getLambda() * Constantes.DT) / (materiau.getRho() * materiau.getC() * Constantes.DX * Constantes.DX);
+        //System.out.println("CONSTANTE c = "+c);
+        double lambda = materiau.getLambda();
+        double rho = materiau.getRho();
+        double c = materiau.getC();
+        return (lambda * Constantes.DT) / (rho * c * Constantes.DX * Constantes.DX);
+        //return c;
     }
 
     public Double update(int pos) {
         if (pos != 0 && pos != murCourant.size() - 1) {
             Double newTemp;
             Double constanteC = getconstanteC(murCourant.getMateriau(pos));
+            //System.out.println("##CONSTANTE C = "+constanteC);
             newTemp = murCourant.getTemp(pos) + constanteC * (murCourant.getTemp(pos + 1) + murCourant.getTemp(pos - 1) - 2 * murCourant.getTemp(pos));
             murSuivant.setTemp(pos, newTemp);
             return newTemp;
@@ -69,6 +78,27 @@ public class Simulateur {
 
     public void affiche() {
         System.out.println(murCourant);
+    }
+
+    public static void main(String[]args){
+        Simulateur simulateur = new Simulateur();
+        Date debut = new Date();
+        int k = 0;
+        simulateur.affiche();
+        while((k++)<600000000){
+            for(int i=0;i<simulateur.sizeSimulation();i++){
+                simulateur.update(i);
+
+            }
+            simulateur.reInit();
+
+        }
+        simulateur.affiche();
+        Date fin = new Date();
+        long diff = fin.getTime() - debut.getTime();
+        System.out.println( (k*Constantes.DT)+" seconds simulated in "+diff+"ms");
+
+
     }
 
 }
