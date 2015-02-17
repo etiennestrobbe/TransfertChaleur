@@ -3,6 +3,7 @@ package org.yolo.etienne.strobbe.transfertchaleur.modele;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 import org.yolo.etienne.strobbe.transfertchaleur.tools.BadIndexException;
+import org.yolo.etienne.strobbe.transfertchaleur.tools.Constantes;
 
 public class MurTest extends TestCase {
 
@@ -55,5 +56,10 @@ public class MurTest extends TestCase {
         assertEquals(mur.getTemp(1), 20.0);
         mur.setTemp(6, 25.0);
         assertEquals(mur.getTemp(6), 25.0);
+    }
+
+    public void testSize() throws Exception {
+        assertNotNull(mur);
+        assertEquals(Constantes.SIZE_ISOLANT + Constantes.SIZE_MUR, mur.size());
     }
 }

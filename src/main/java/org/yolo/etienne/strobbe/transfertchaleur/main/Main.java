@@ -9,6 +9,7 @@ import java.util.logging.Logger;
 public class Main {
 
     private static final Logger LOGGER = Logger.getLogger("Main");
+
     private Main() {
     }
 
@@ -29,20 +30,23 @@ public class Main {
         try {
             Thread.sleep(10000);
         } catch (InterruptedException e) {
-            LOGGER.log(Level.SEVERE, "Thread.sleep a planté");
+            LOGGER.log(Level.SEVERE, e.getMessage());
         }
 
         Simulateur simulateur = new Simulateur();
         for (int i = 0; i < 100000; i++) {
             for (int j = 0; j < simulateur.sizeSimulation(); j++) {
-                if (i % 1000 == 0) {
+                if (i % 500 == 0) {
                     sendMsg(simulateur, i, j);
+                } else {
+                    simulateur.update(j);
                 }
 
             }
             simulateur.reInit();
         }
         LOGGER.log(Level.INFO, "fin simulation");
+        simulateur.affiche();
 
     }
 }
