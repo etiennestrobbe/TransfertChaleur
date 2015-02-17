@@ -8,12 +8,15 @@ import org.webbitserver.handler.StaticFileHandler;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
 public class JavaWebSocketServer {
     private static final int WS_PORT = 9900;
     private static final String WS_ENTRY_POINT = "progconc";
     private static JavaWebSocketServer instance;
+    private static final Logger LOGGER = Logger.getLogger("JavaWebSocketServer");
 
     private WebServer webserver;
     private Set<WebSocketConnection> connections;
@@ -38,13 +41,11 @@ public class JavaWebSocketServer {
                         .add("/" + WS_ENTRY_POINT, new JavaWebSocket(this))
                         .add(new StaticFileHandler("./web"))
                         .start().get();
-                System.out.println("Web Socket entry point is at : ws://" + this.webserver.getUri().getHost() + ":" + this.webserver.getUri().getPort() + "/" + WS_ENTRY_POINT);
+                LOGGER.log(Level.INFO, "Web Socket entry point is at : ws://" + this.webserver.getUri().getHost() + ":" + this.webserver.getUri().getPort() + "/" + WS_ENTRY_POINT);
             } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                LOGGER.log(Level.SEVERE, e.getMessage());
             } catch (ExecutionException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                LOGGER.log(Level.SEVERE, e.getMessage());
             }
         }
     }

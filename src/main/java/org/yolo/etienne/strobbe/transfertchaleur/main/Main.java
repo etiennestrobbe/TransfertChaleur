@@ -9,9 +9,18 @@ import java.util.logging.Logger;
 public class Main {
 
     private static final Logger LOGGER = Logger.getLogger("Main");
+
     private Main() {
     }
 
+    /**
+     * Methode qui envoi un message préformaté
+     * pour la visualisation sur le serveur erebe
+     *
+     * @param simulateur le simulateur
+     * @param time
+     * @param pos
+     */
     public static void sendMsg(Simulateur simulateur, int time, int pos) {
         String message = "<elt>";
         message += "<time>" + time + "</time>";
@@ -21,6 +30,10 @@ public class Main {
         JavaWebSocketServer.getInstance().broadcastMessage(message);
     }
 
+    /**
+     * Main principal
+     * @param args
+     */
     public static void main(String[] args) {
         LOGGER.log(Level.INFO, "Début simulation");
 
@@ -29,20 +42,23 @@ public class Main {
         try {
             Thread.sleep(10000);
         } catch (InterruptedException e) {
-            LOGGER.log(Level.SEVERE, "Thread.sleep a planté");
+            LOGGER.log(Level.SEVERE, e.getMessage());
         }
 
         Simulateur simulateur = new Simulateur();
-        for (int i = 0; i < 100000; i++) {
+        for (int i = 0; i < 1000000; i++) {
             for (int j = 0; j < simulateur.sizeSimulation(); j++) {
                 if (i % 1000 == 0) {
                     sendMsg(simulateur, i, j);
+                } else {
+                    simulateur.update(j);
                 }
 
             }
             simulateur.reInit();
         }
         LOGGER.log(Level.INFO, "fin simulation");
+        simulateur.affiche();
 
     }
 }

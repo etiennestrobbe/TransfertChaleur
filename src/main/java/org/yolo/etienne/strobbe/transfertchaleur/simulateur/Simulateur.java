@@ -2,9 +2,9 @@ package org.yolo.etienne.strobbe.transfertchaleur.simulateur;
 
 import org.yolo.etienne.strobbe.transfertchaleur.modele.Materiau;
 import org.yolo.etienne.strobbe.transfertchaleur.modele.Mur;
-import org.yolo.etienne.strobbe.transfertchaleur.tools.BadIndexException;
 import org.yolo.etienne.strobbe.transfertchaleur.tools.Constantes;
 
+import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -35,19 +35,23 @@ public class Simulateur {
      * @return
      */
     private Double getconstanteC(Materiau materiau) {
-        return (materiau.getLambda() * Constantes.DT) / (materiau.getRho() * materiau.getC() * Constantes.DX * Constantes.DX);
+        double lambda = materiau.getLambda();
+        double rho = materiau.getRho();
+        double c = materiau.getC();
+        return (lambda * Constantes.DT) / (rho * c * Constantes.DX * Constantes.DX);
     }
 
+    /**
+     * Methode qui met a jour la température
+     * du mur au point donné
+     *
+     * @param pos le lieu a mettre a jour
+     * @return la nouvelle température calculée
+     */
     public Double update(int pos) {
         if (pos != 0 && pos != murCourant.size() - 1) {
             Double newTemp;
-            Double constanteC;
-            try {
-                constanteC = getconstanteC(murCourant.getMateriau(pos));
-            } catch (BadIndexException e) {
-                LOGGER.log(Level.SEVERE, e.getLocalizedMessage());
-                constanteC = getconstanteC(Materiau.DEFAULT);
-            }
+            Double constanteC = getconstanteC(murCourant.getMateriau(pos));
             newTemp = murCourant.getTemp(pos) + constanteC * (murCourant.getTemp(pos + 1) + murCourant.getTemp(pos - 1) - 2 * murCourant.getTemp(pos));
             murSuivant.setTemp(pos, newTemp);
             return newTemp;
@@ -63,5 +67,29 @@ public class Simulateur {
         return murCourant.size();
     }
 
+    public void affiche() {
+        LOGGER.log(Level.INFO, murCourant.toString());
+    }
+
+    public static void main(String[] args) {
+        Simulateur simulateur = new Simulateur();
+        Date debut = new Date();
+        int k = 0;
+        simulateur.affiche();
+        while ((k++) < 10000000) {
+            for (int i = 0; i < simulateur.sizeSimulation(); i++) {
+                simulateur.update(i);
+
+            }
+            simulateur.reInit();
+
+        }
+        simulateur.affiche();
+        Date fin = new Date();
+        long diff = fin.getTime() - debut.getTime();
+        LOGGER.log(Level.INFO, (k * Constantes.DT) + " seconds simulated in " + diff + "ms");
+
+
+    }
 
 }
