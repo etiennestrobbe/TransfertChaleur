@@ -45,7 +45,7 @@ public class Main {
             LOGGER.log(Level.SEVERE, e.getMessage());
         }
 
-        Simulateur simulateur = new Simulateur();
+        Simulateur simulateur = new Simulateur(100000);
         for (int i = 0; i < 1000000; i++) {
             for (int j = 0; j < simulateur.sizeSimulation(); j++) {
                 if (i % 1000 == 0) {

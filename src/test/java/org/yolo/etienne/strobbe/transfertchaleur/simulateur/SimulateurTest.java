@@ -9,7 +9,7 @@ public class SimulateurTest extends TestCase {
 
     public void setUp() throws Exception {
         super.setUp();
-        simulateur = new Simulateur();
+        simulateur = new Simulateur(10);
 
     }
 

@@ -8,7 +8,11 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -22,17 +26,36 @@ public class Simulateur {
     private Mur murSuivant;
     private BufferedWriter writer;
     private Double[] constantes;
+    private CyclicBarrier barrier;
+    private Runnable barrierAction;
+    private boolean done = false;
+    private Date debut;
+    private Date fin;
 
     /**
      * Constructeur
      */
-    public Simulateur() {
+    public Simulateur(final int iterations) {
         this.murCourant = new Mur();
         this.murCourant.setInit();
         this.murSuivant = new Mur();
         this.murSuivant.setInit();
         this.constantes = new Double[2];
         this.setConstantes();
+        this.barrierAction = new Runnable() {
+            private int actual = 0;
+            @Override
+            public void run() {
+                actual++;
+                if (actual>= iterations){
+                    done = true;
+                    System.out.println("FINI");
+                    fin = new Date();
+                }
+                murCourant = murSuivant;
+            }
+        };
+        this.barrier = new CyclicBarrier(murCourant.size(),barrierAction);
         try {
             this.writer = new BufferedWriter(new FileWriter(new File("out.txt")));
         } catch (IOException e) {
@@ -40,25 +63,7 @@ public class Simulateur {
         }
     }
 
-    /**
-     * Main de test
-     *
-     * @param args
-     */
-    public static void main(String[] args) {
-        Simulateur simulateur = new Simulateur();
-        int k = 100000;
-        Date debut = new Date();
-        //simulateur.affiche();
-        simulateur.simule(k);
-        //simulateur.affiche();
-        Date fin = new Date();
-        long diff = fin.getTime() - debut.getTime();
-        LOGGER.log(Level.INFO, "Approximately " + Math.round((k * Constantes.DT) / 3600) + " hours simulated in " + diff + "ms");
-        simulateur.closeWrite();
 
-
-    }
 
     /**
      * Calcule la constante C pour la formule de calcul de température
@@ -107,13 +112,13 @@ public class Simulateur {
         murCourant = murSuivant;
     }
 
-    public void simule(int iterations) {
-        for (int i = 0; i < iterations; i++) {
-            for (int j = 1; j < this.sizeSimulation(); j++) {
-                update(j);
-            }
-            reInit();
-            //this.appendToFile(murCourant.toString());
+    public void simule() {
+        createThreads(murCourant.size());
+    }
+
+    private void createThreads(int nb){
+        for(int i=0; i<nb; i++){
+            new ThreadSimulation(i).start();
         }
     }
 
@@ -157,6 +162,53 @@ public class Simulateur {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+    }
+
+    private class ThreadSimulation extends Thread{
+        private int position;
+
+        public ThreadSimulation(int position){
+            super();
+            this.position = position;
+        }
+        public void run(){
+            while (!done){
+                update(this.position);
+                try {
+                    barrier.await();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (BrokenBarrierException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    /**
+     * Main de test
+     *
+     * @param args
+     */
+    public static void main(String[] args) {
+        int k  = 100000;
+        Simulateur simulateur = new Simulateur(k);
+        simulateur.debut = new Date();
+        simulateur.affiche();
+        simulateur.simule();
+        while (!simulateur.done){
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        simulateur.affiche();
+        long diff = simulateur.fin.getTime() - simulateur.debut.getTime();
+        LOGGER.log(Level.INFO, "Approximately " + Math.round((k * Constantes.DT) / 3600) + " hours simulated in " + diff + "ms");
+        simulateur.closeWrite();
+
 
     }
 
