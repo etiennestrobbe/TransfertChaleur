@@ -26,11 +26,12 @@ public class Simulateur {
     private Mur murSuivant;
     private BufferedWriter writer;
     private Double[] constantes;
-    private CyclicBarrier barrier;
+    private MyBarrier barrier;
     private Runnable barrierAction;
     private boolean done = false;
     private Date debut;
     private Date fin;
+    private MonitorObject monitorObject;
 
     /**
      * Constructeur
@@ -42,7 +43,8 @@ public class Simulateur {
         this.murSuivant.setInit();
         this.constantes = new Double[2];
         this.setConstantes();
-        this.barrierAction = new Runnable() {
+        this.monitorObject = new MonitorObject();
+        /*this.barrierAction = new Runnable() {
             private int actual = 0;
             @Override
             public void run() {
@@ -52,10 +54,13 @@ public class Simulateur {
                     System.out.println("FINI");
                     fin = new Date();
                 }
+                System.out.println("Bite");
+                affiche();
                 murCourant = murSuivant;
             }
         };
-        this.barrier = new CyclicBarrier(murCourant.size(),barrierAction);
+        */
+        this.barrier = new MyBarrier();
         try {
             this.writer = new BufferedWriter(new FileWriter(new File("out.txt")));
         } catch (IOException e) {
@@ -97,7 +102,30 @@ public class Simulateur {
             Double constanteC = ((murCourant.getMateriau(pos)) == Materiau.BRIQUE) ? constantes[0] : constantes[1];
             newTemp = murCourant.getTemp(pos) + constanteC * (murCourant.getTemp(pos + 1) + murCourant.getTemp(pos - 1) - 2 * murCourant.getTemp(pos));
             murSuivant.setTemp(pos, newTemp);
+
+            synchronized (monitorObject){
+                barrier.addThread();
+                while (!barrier.isAllThreadDone()){
+                    try {
+                        monitorObject.wait();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                monitorObject.notifyAll();
+            }
             return newTemp;
+        }
+        synchronized (monitorObject){
+            barrier.addThread();
+            while (!barrier.isAllThreadDone()){
+                try {
+                    monitorObject.wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            monitorObject.notifyAll();
         }
         return murCourant.getTemp(pos);
     }
@@ -175,16 +203,42 @@ public class Simulateur {
         public void run(){
             while (!done){
                 update(this.position);
-                try {
-                    barrier.await();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } catch (BrokenBarrierException e) {
-                    e.printStackTrace();
-                }
             }
         }
     }
+
+    private class MyBarrier{
+        private int nbThreadDone = 0;
+        private int iteration = 0;
+        private int max = 10000000;
+
+        public synchronized boolean isAllThreadDone(){
+            if(this.nbThreadDone >= murCourant.size()){
+                murCourant = murSuivant;
+                //
+                if(++iteration >= max){
+                    done = true;
+                    fin = new Date();
+                }
+                //resetNb();
+                return true;
+            }
+            return false;
+        }
+
+        public synchronized void resetNb(){
+            this.nbThreadDone = 0;
+        }
+
+        public synchronized void addThread(){
+            nbThreadDone++;
+        }
+    }
+
+    private class MonitorObject{
+    }
+
+
 
     /**
      * Main de test
@@ -192,10 +246,10 @@ public class Simulateur {
      * @param args
      */
     public static void main(String[] args) {
-        int k  = 100000;
+        int k  = 1000;
         Simulateur simulateur = new Simulateur(k);
         simulateur.debut = new Date();
-        simulateur.affiche();
+        //simulateur.affiche();
         simulateur.simule();
         while (!simulateur.done){
             try {
