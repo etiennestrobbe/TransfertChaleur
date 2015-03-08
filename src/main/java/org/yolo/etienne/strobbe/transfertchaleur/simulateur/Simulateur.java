@@ -59,7 +59,7 @@ public class Simulateur {
 
 
     }
-    
+
     /**
      * Calcule la constante C pour la formule de calcul de température
      * selon un certain matériau
