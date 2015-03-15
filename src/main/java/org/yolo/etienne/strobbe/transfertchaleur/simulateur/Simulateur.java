@@ -8,11 +8,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.CyclicBarrier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -44,22 +40,6 @@ public class Simulateur {
         this.constantes = new Double[2];
         this.setConstantes();
         this.monitorObject = new MonitorObject();
-        /*this.barrierAction = new Runnable() {
-            private int actual = 0;
-            @Override
-            public void run() {
-                actual++;
-                if (actual>= iterations){
-                    done = true;
-                    System.out.println("FINI");
-                    fin = new Date();
-                }
-                System.out.println("Bite");
-                affiche();
-                murCourant = murSuivant;
-            }
-        };
-        */
         this.barrier = new MyBarrier();
         try {
             this.writer = new BufferedWriter(new FileWriter(new File("out.txt")));
@@ -68,7 +48,31 @@ public class Simulateur {
         }
     }
 
+    /**
+     * Main de test
+     *
+     * @param args
+     */
+    public static void main(String[] args) {
+        int k = 1000;
+        Simulateur simulateur = new Simulateur(k);
+        simulateur.debut = new Date();
+        //simulateur.affiche();
+        simulateur.simule();
+        while (!simulateur.done) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        simulateur.affiche();
+        long diff = simulateur.fin.getTime() - simulateur.debut.getTime();
+        LOGGER.log(Level.INFO, "Approximately " + Math.round((k * Constantes.DT) / 3600) + " hours simulated in " + diff + "ms");
+        simulateur.closeWrite();
 
+
+    }
 
     /**
      * Calcule la constante C pour la formule de calcul de température
@@ -102,32 +106,18 @@ public class Simulateur {
             Double constanteC = ((murCourant.getMateriau(pos)) == Materiau.BRIQUE) ? constantes[0] : constantes[1];
             newTemp = murCourant.getTemp(pos) + constanteC * (murCourant.getTemp(pos + 1) + murCourant.getTemp(pos - 1) - 2 * murCourant.getTemp(pos));
             murSuivant.setTemp(pos, newTemp);
-
-            synchronized (monitorObject){
-                barrier.addThread();
-                while (!barrier.isAllThreadDone()){
-                    try {
-                        monitorObject.wait();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-                monitorObject.notifyAll();
-            }
+            barrier.await();
             return newTemp;
         }
-        synchronized (monitorObject){
-            barrier.addThread();
-            while (!barrier.isAllThreadDone()){
-                try {
-                    monitorObject.wait();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-            monitorObject.notifyAll();
-        }
+        barrier.await();
         return murCourant.getTemp(pos);
+    }
+
+    private void reInitMur(int pos) {
+        if (pos != 0 && pos != murCourant.size() - 1) {
+            murCourant.setTemp(pos, murSuivant.getTemp(pos));
+        }
+        barrier.await();
     }
 
     /**
@@ -203,23 +193,45 @@ public class Simulateur {
         public void run(){
             while (!done){
                 update(this.position);
+                reInitMur(this.position);
             }
         }
     }
 
     private class MyBarrier{
+
+        private MyNotif notif = new MyNotif();
+
+        public void await() {
+            synchronized (monitorObject) {
+                notif.addThread();
+                while (!notif.isAllThreadDone()) {
+                    try {
+                        monitorObject.wait();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                monitorObject.notifyAll();
+            }
+        }
+
+    }
+
+    private class MyNotif {
         private int nbThreadDone = 0;
         private int iteration = 0;
-        private int max = 10000000;
+        private int max = 100000;
 
         public synchronized boolean isAllThreadDone(){
             if(this.nbThreadDone >= murCourant.size()){
-                murCourant = murSuivant;
+                //murCourant = murSuivant;
                 //
                 if(++iteration >= max){
                     done = true;
                     fin = new Date();
                 }
+
                 //resetNb();
                 return true;
             }
@@ -236,34 +248,6 @@ public class Simulateur {
     }
 
     private class MonitorObject{
-    }
-
-
-
-    /**
-     * Main de test
-     *
-     * @param args
-     */
-    public static void main(String[] args) {
-        int k  = 1000;
-        Simulateur simulateur = new Simulateur(k);
-        simulateur.debut = new Date();
-        //simulateur.affiche();
-        simulateur.simule();
-        while (!simulateur.done){
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-        simulateur.affiche();
-        long diff = simulateur.fin.getTime() - simulateur.debut.getTime();
-        LOGGER.log(Level.INFO, "Approximately " + Math.round((k * Constantes.DT) / 3600) + " hours simulated in " + diff + "ms");
-        simulateur.closeWrite();
-
-
     }
 
 }
