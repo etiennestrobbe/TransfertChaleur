@@ -55,7 +55,7 @@ public class Main {
                 }
 
             }
-            simulateur.reInit();
+            //simulateur.reInit();
         }
         LOGGER.log(Level.INFO, "fin simulation");
         simulateur.affiche();
