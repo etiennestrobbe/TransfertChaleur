@@ -1,7 +1,6 @@
 package org.yolo.etienne.strobbe.transfertchaleur.simulateur;
 
 import org.yolo.etienne.strobbe.transfertchaleur.modele.Materiau;
-import org.yolo.etienne.strobbe.transfertchaleur.modele.Mur;
 import org.yolo.etienne.strobbe.transfertchaleur.tools.Constantes;
 
 import java.io.BufferedWriter;
@@ -46,7 +45,7 @@ public class Simulateur {
         this.max = iterations;
        /* this.murCourant = new Mur();
         this.murCourant.setInit();*/
-        this.mur = new Double[]{110.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0};
+        this.mur = new Double[]{110.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0};
         this.C = new Double[10];
         //this.murSuivant = new Mur();
         //this.murSuivant.setInit();
@@ -62,17 +61,18 @@ public class Simulateur {
             @Override
             public void run() {
                 //System.out.println("####Barrière remplacement levée");
+                //mur[6] = mur[5];
                 if(++it >= max){
                     fin = new Date();
                     done = true;
                 }
-                if(it%6 == 0){
-                    //affiche();
-                }
+                /*if(it%6 == 0){
+                    affiche();
+                }*/
             }
         };
-        this.barrierCalcul = new CyclicBarrier(8,barrierActionCalcul);
-        this.barrierReInit = new CyclicBarrier(8,barrierActionReInit);
+        this.barrierCalcul = new CyclicBarrier(7, barrierActionCalcul);
+        this.barrierReInit = new CyclicBarrier(7, barrierActionReInit);
         try {
             this.writer = new BufferedWriter(new FileWriter(new File("out.txt")));
         } catch (IOException e) {
@@ -80,7 +80,31 @@ public class Simulateur {
         }
     }
 
+    /**
+     * Main de test
+     *
+     * @param args
+     */
+    public static void main(String[] args) {
+        int k = 100000;
+        Simulateur simulateur = new Simulateur(k);
+        simulateur.affiche();
+        simulateur.debut = new Date();
+        simulateur.simule();
+        while (!simulateur.done) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        simulateur.affiche();
+        long diff = simulateur.fin.getTime() - simulateur.debut.getTime();
+        LOGGER.log(Level.INFO, "Approximately " + Math.round((simulateur.it * Constantes.DT) / 3600) + " hours simulated in " + diff + "ms");
+        simulateur.closeWrite();
 
+
+    }
 
     /**
      * Calcule la constante C pour la formule de calcul de température
@@ -102,7 +126,7 @@ public class Simulateur {
         for(int i=0;i<6;i++){
             C[i] = constanteMur;
         }
-        for (int i=6;i<10;i++){
+        for (int i = 6; i < 9; i++) {
             C[i] = constanteIso;
         }
         System.out.println("C1 : " + constanteMur + " C2 : " + constanteIso);
@@ -128,8 +152,8 @@ public class Simulateur {
         }
         //barrier.await();
         return murCourant.getTemp(pos);*/
-        //System.out.println(mur[pos]+"+"+ C[pos+1]+"*"+mur[pos+1]+"+" + C[pos-1]+"*"+mur[pos-1]+ "-"+ 2+"*"+C[pos]+"*"+mur[pos]);
-        return mur[pos] + C[pos+1]*mur[pos+1] + C[pos-1]*mur[pos-1] - 2*C[pos]*mur[pos];
+        //System.out.println("POSITION "+pos+ " : "+mur[pos]+"+"+ C[pos+1]+"*"+mur[pos+1]+"+" + C[pos-1]+"*"+mur[pos-1]+ "-"+ 2+"*"+C[pos]+"*"+mur[pos]+ " == "+((mur[pos]) + (C[pos+1]*mur[pos+1]) + (C[pos-1]*mur[pos-1]) - (2*C[pos]*mur[pos])) );
+        return mur[pos] + C[pos + 1] * mur[pos + 1] + C[pos - 1] * mur[pos - 1] - (C[pos + 1] + C[pos - 1]) * mur[pos];
     }
 
     private void reInitMur(int pos,double newValue) {
@@ -174,7 +198,11 @@ public class Simulateur {
     public void affiche() {
         String res = "[ ";
         for (int i=0;i<mur.length-1;i++){
-            if (i==6) res+= " - ";
+            if (i == 6) {
+                BigDecimal bd = new BigDecimal(mur[i - 1]);
+                bd = bd.setScale(1, RoundingMode.HALF_UP);
+                res += " - " + bd.doubleValue() + ", ";
+            }
             BigDecimal bd = new BigDecimal(mur[i]);
             bd = bd.setScale(1, RoundingMode.HALF_UP);
             res += bd.doubleValue() + " , ";
@@ -209,39 +237,6 @@ public class Simulateur {
             e.printStackTrace();
         }
 
-    }
-
-
-    private class ThreadSimulation implements Runnable{
-        private int position;
-        private double value;
-
-        public ThreadSimulation(int position){
-            super();
-            this.position = position;
-            this.value = 0.0;
-        }
-        public void run(){
-            while (!done){
-                value = update(this.position);
-                try {
-                    barrierCalcul.await();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } catch (BrokenBarrierException e) {
-                    e.printStackTrace();
-                }
-                reInitMur(this.position,value);
-                try {
-                    barrierReInit.await();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } catch (BrokenBarrierException e) {
-                    e.printStackTrace();
-
-                }
-            }
-        }
     }
 
     /*
@@ -301,30 +296,37 @@ public class Simulateur {
     *
     */
 
-    /**
-     * Main de test
-     *
-     * @param args
-     */
-    public static void main(String[] args) {
-        int k = 100000;
-        Simulateur simulateur = new Simulateur(k);
-        simulateur.affiche();
-        simulateur.debut = new Date();
-        simulateur.simule();
-        while (!simulateur.done) {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+    private class ThreadSimulation implements Runnable {
+        private int position;
+        private double value;
+
+        public ThreadSimulation(int position) {
+            super();
+            this.position = position;
+            this.value = 0.0;
+        }
+
+        public void run() {
+            while (!done) {
+                value = update(this.position);
+                try {
+                    barrierCalcul.await();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (BrokenBarrierException e) {
+                    e.printStackTrace();
+                }
+                reInitMur(this.position, value);
+                try {
+                    barrierReInit.await();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (BrokenBarrierException e) {
+                    e.printStackTrace();
+                }
+
             }
         }
-        simulateur.affiche();
-        long diff = simulateur.fin.getTime() - simulateur.debut.getTime();
-        LOGGER.log(Level.INFO, "Approximately " + Math.round((simulateur.it * Constantes.DT) / 3600) + " hours simulated in " + diff + "ms");
-        simulateur.closeWrite();
-
-
     }
 
 
