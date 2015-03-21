@@ -1,12 +1,6 @@
 package org.yolo.etienne.strobbe.transfertchaleur.simulateur;
 
-import org.yolo.etienne.strobbe.transfertchaleur.modele.Materiau;
-import org.yolo.etienne.strobbe.transfertchaleur.tools.Constantes;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Date;
@@ -17,12 +11,11 @@ import java.util.logging.Logger;
 
 /**
  * @author Etienne Strobbe
- * Classe s'occupant de la simulation de transmission de chaleur. Tous les calculs sont effectués dans cette classe.
+ * Classe s'occupant de la simulation de transmission de chaleur. Tous les calculs sont effectues dans cette classe.
  */
 public class Simulateur {
     private static final Logger LOGGER = Logger.getLogger("Simulateur");
     private Double[] mur;
-    private BufferedWriter writer;
     private Double[] C;
     private CyclicBarrier barrierCalcul;
     private CyclicBarrier barrierReInit;
@@ -33,7 +26,8 @@ public class Simulateur {
     private Date fin;
     private int it = 0;
     private int max;
-    //private MonitorObject monitorObject;
+    public static final double DT = 600.0;
+    public static final double DX = 0.04;
 
     /**
      * Constructeur
@@ -49,69 +43,30 @@ public class Simulateur {
             }
         };
         this.barrierActionReInit = new Runnable() {
+            boolean last = false;
             @Override
             public void run() {
+                /*if(mur[7]>20 && !last){
+                    System.out.println("Derniere couche atteinte a l'iteration "+it);
+                    last = true;
+                }*/
                 if(++it >= max){
                     fin = new Date();
                     done = true;
                 }
-                /*if(it%6 == 0){
+                if (it % 6 == 0) {
+                    System.out.print("t=" + (it / 6) + "h ->");
                     affiche();
-                }*/
+                }
             }
         };
         this.barrierCalcul = new CyclicBarrier(7, barrierActionCalcul);
         this.barrierReInit = new CyclicBarrier(7, barrierActionReInit);
-        try {
-            this.writer = new BufferedWriter(new FileWriter(new File("out.txt")));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Main de test
-     *
-     * @param args
-     */
-    public static void main(String[] args) {
-        int k = 100000;
-        Simulateur simulateur = new Simulateur(k);
-        simulateur.affiche();
-        simulateur.debut = new Date();
-        simulateur.simule();
-        while (!simulateur.done) {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-        simulateur.affiche();
-        long diff = simulateur.fin.getTime() - simulateur.debut.getTime();
-        LOGGER.log(Level.INFO, "Approximately " + Math.round((simulateur.it * Constantes.DT) / 3600) + " hours simulated in " + diff + "ms");
-        simulateur.closeWrite();
-
-
-    }
-
-    /**
-     * Calcule la constante C pour la formule de calcul de température
-     * selon un certain matériau
-     *
-     * @param materiau
-     * @return
-     */
-    private Double getconstanteC(Materiau materiau) {
-        double lambda = materiau.getLambda();
-        double rho = materiau.getRho();
-        double c = materiau.getC();
-        return (lambda * Constantes.DT) / (rho * c * Constantes.DX * Constantes.DX);
     }
 
     private void setConstantes() {
-        Double constanteMur = this.getconstanteC(Materiau.BRIQUE);
-        Double constanteIso = this.getconstanteC(Materiau.LAINE_DE_VERRE);
+        Double constanteMur = (0.84 * DT) / (1400 * 840 * DX * DX);
+        Double constanteIso = (0.04 * DT) / (30 * 900 * DX * DX);
         for(int i=0;i<6;i++){
             C[i] = constanteMur;
         }
@@ -122,96 +77,70 @@ public class Simulateur {
     }
 
     /**
-     * Methode qui met a jour la température
-     * du mur au point donné
+     * Methode qui met a jour la temperature
+     * du mur au point donne
      *
      * @param pos le lieu a mettre a jour
-     * @return la nouvelle température calculée
+     * @return la nouvelle temperature calculee
      */
     public Double update(int pos) {
         return mur[pos] + C[pos + 1] * mur[pos + 1] + C[pos - 1] * mur[pos - 1] - (C[pos + 1] + C[pos - 1]) * mur[pos];
     }
 
     /**
-     * Methode qui permet de réinitialiser
-     * les valeurs des températures des murs
-     * après la fin des calculs
+     * Methode qui permet de reinitialiser
+     * les valeurs des temperatures des murs
+     * apres la fin des calculs
      * (on fait T(x,t) = T(x,t+1) )
      */
     private void reInitMur(int pos,double newValue) {
         mur[pos] = newValue;
     }
 
-
-
+    /**
+     * Lance la simulation
+     */
     public void simule() {
         createThreads(mur.length);
     }
 
+    /**
+     * Creer les differents threads necessaires pour faires les calculs
+     *
+     * @param nb
+     */
     private void createThreads(int nb){
         for(int i=1; i<nb-1; i++){
             new Thread(new ThreadSimulation(i)).start();
         }
     }
 
-    /**
-     * Méthode qui renvoi la taille
-     * de la simulation, ce qui
-     * correspond à l'épaisseur du mur
-     * que l'on simule
-     * @return l'épaisseur du mur que l'on simule
-     */
-    public int sizeSimulation() {
-        return mur.length;
-    }
-
-    private String round(Double value) {
+    private int round(Double value) {
         BigDecimal bd = new BigDecimal(value);
-        bd = bd.setScale(1, RoundingMode.HALF_UP);
-        return bd.doubleValue() + "";
+        bd = bd.setScale(0, RoundingMode.HALF_UP);
+        return bd.intValue();
     }
 
     /**
-     * Méthode qui affiche l'état courant du mur
+     * Methode qui affiche l'etat courant du mur
      */
     public void affiche() {
-        String res = "[ ";
+        String res = "[";
         for (int i=0;i<mur.length-1;i++){
             if (i == 6) {
-                res += " - " + round(mur[i - 1]) + ", ";
+                res += " - " + round(mur[i - 1]) + ",";
             }
-            res += round(mur[i]) + " , ";
+            if (i != 5) res += round(mur[i]) + ",";
+            else res += round(mur[i]);
         }
         res += round(mur[mur.length - 1]) + " ]";
-        //LOGGER.log(Level.INFO, mur.toString());
         System.out.println(res);
     }
 
-    public void closeWrite() {
-        try {
-            this.writer.flush();
-            this.writer.close();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     /**
-     * Methode qui ajoute du texte au
-     * fichier de sortie
-     *
-     * @param text
+     * Thread qui calcul la nouvelle temperature a un point donne
+     * ce Thread est synchronise par une barriere
      */
-    public void appendToFile(String text) {
-        try {
-            writer.write(text + "\n");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-
     private class ThreadSimulation implements Runnable {
         private int position;
         private double value;
@@ -236,6 +165,33 @@ public class Simulateur {
                 }
             }
         }
+    }
+
+    /**
+     * Main de test
+     *
+     * @param args
+     */
+    public static void main(String[] args) {
+        int k = 60;
+        Simulateur simulateur = new Simulateur(k);
+        System.out.print("t=0h ->");
+
+        simulateur.affiche();
+        simulateur.debut = new Date();
+
+        simulateur.simule();
+        while (!simulateur.done) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        long diff = simulateur.fin.getTime() - simulateur.debut.getTime();
+        LOGGER.log(Level.INFO, "Approximately " + Math.round((simulateur.it * DT) / 3600) + " hours simulated in " + diff + "ms");
+
+
     }
 
 
