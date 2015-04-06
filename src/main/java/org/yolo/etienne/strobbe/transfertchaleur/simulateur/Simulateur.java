@@ -130,6 +130,7 @@ public class Simulateur {
 
         for (int i = 0; i < mur.length; i++) {
             for (int j = 0; j < mur[0].length; j++) {
+                if (j == 6) System.out.print("-  " + round(mur[i][j - 1]) + " ");
                 System.out.print(round(mur[i][j]) + " ");
             }
             System.out.print("\n");
@@ -251,10 +252,10 @@ public class Simulateur {
      * @param args
      */
     public static void main(String[] args) {
-        int k = 100000;
+        int k = 100;
         Simulateur simulateur = new Simulateur(k);
 
-        simulateur.affiche(0);
+        //simulateur.affiche(0);
         simulateur.simule();
         while (!simulateur.isDone()) {
             try {
@@ -263,7 +264,7 @@ public class Simulateur {
                 e.printStackTrace();
             }
         }
-        simulateur.affiche(k - 1);
+        simulateur.affiche();
         long diff = simulateur.fin.getTime() - simulateur.debut.getTime();
         LOGGER.log(Level.INFO, "Approximately " + Math.round((simulateur.it * DT) / 3600) + " hours simulated in " + diff + "ms");
 
