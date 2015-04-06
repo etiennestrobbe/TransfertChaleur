@@ -4,8 +4,6 @@ package org.yolo.etienne.strobbe.transfertchaleur.simulateur;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Date;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.CyclicBarrier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -15,18 +13,14 @@ import java.util.logging.Logger;
  */
 public class Simulateur {
     private static final Logger LOGGER = Logger.getLogger("Simulateur");
-    private Double[] mur;
+    private Double[][] mur;
     private Double[] C;
-    private CyclicBarrier barrierCalcul;
-    private CyclicBarrier barrierReInit;
-    private Runnable barrierActionCalcul;
-    private Runnable barrierActionReInit;
     private boolean done = false;
     private Date debut;
     private Date fin;
     private int it = 0;
     private int max;
-    public static final double DT = 600.0;
+    public static final double DT = 1.0;
     public static final double DX = 0.04;
 
     /**
@@ -34,34 +28,17 @@ public class Simulateur {
      */
     public Simulateur(final int iterations) {
         this.max = iterations;
-        this.mur = new Double[]{110.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0};
+        this.mur = new Double[iterations][9];//{110.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0};
+        for (int i = 1; i < 9; i++) {
+            mur[0][i] = 20.0;
+        }
+        for (int i = 0; i < iterations; i++) {
+            mur[i][0] = 110.0;
+            mur[i][8] = 20.0;
+
+        }
         this.C = new Double[10];
         this.setConstantes();
-        this.barrierActionCalcul = new Runnable() {
-            @Override
-            public void run() {
-            }
-        };
-        this.barrierActionReInit = new Runnable() {
-            boolean last = false;
-            @Override
-            public void run() {
-                /*if(mur[7]>20 && !last){
-                    System.out.println("Derniere couche atteinte a l'iteration "+it);
-                    last = true;
-                }*/
-                if(++it >= max){
-                    fin = new Date();
-                    done = true;
-                }
-                if (it % 6 == 0) {
-                    System.out.print("t=" + (it / 6) + "h ->");
-                    affiche();
-                }
-            }
-        };
-        this.barrierCalcul = new CyclicBarrier(7, barrierActionCalcul);
-        this.barrierReInit = new CyclicBarrier(7, barrierActionReInit);
     }
 
     private void setConstantes() {
@@ -84,7 +61,13 @@ public class Simulateur {
      * @return la nouvelle temperature calculee
      */
     public Double update(int pos) {
-        return mur[pos] + C[pos + 1] * mur[pos + 1] + C[pos - 1] * mur[pos - 1] - (C[pos + 1] + C[pos - 1]) * mur[pos];
+        return 0.0;///mur[pos] + C[pos + 1] * mur[pos + 1] + C[pos - 1] * mur[pos - 1] - (C[pos + 1] + C[pos - 1]) * mur[pos];
+    }
+
+    public double update(double tmp, double avant, double apres, int pos, int it) {
+        double value = tmp + C[pos + 1] * apres + C[pos - 1] * avant - (C[pos + 1] + C[pos - 1]) * tmp;
+        mur[it][pos] = value;
+        return value;
     }
 
     /**
@@ -94,14 +77,14 @@ public class Simulateur {
      * (on fait T(x,t) = T(x,t+1) )
      */
     private void reInitMur(int pos,double newValue) {
-        mur[pos] = newValue;
+        // mur[pos] = newValue;
     }
 
     /**
      * Lance la simulation
      */
     public void simule() {
-        createThreads(mur.length);
+        createThreads(9);
     }
 
     /**
@@ -110,31 +93,44 @@ public class Simulateur {
      * @param nb
      */
     private void createThreads(int nb){
-        for(int i=1; i<nb-1; i++){
-            new Thread(new ThreadSimulation(i)).start();
+        Rdv[] listRdv = new Rdv[8];
+        for (int i = 0; i < listRdv.length; i++) {
+            listRdv[i] = new Rdv(i);
+        }
+        for (int j = 1; j < nb - 1; j++) {
+            new Thread(new ThreadSimulation(j, this.max, listRdv[j - 1], listRdv[j])).start();
         }
     }
 
     private int round(Double value) {
+        if (value == null) return -1;
         BigDecimal bd = new BigDecimal(value);
         bd = bd.setScale(0, RoundingMode.HALF_UP);
         return bd.intValue();
     }
 
     /**
-     * Methode qui affiche l'etat courant du mur
+     * Methode qui affiche l'etat it du mur
      */
     public void affiche() {
-        String res = "[";
-        for (int i=0;i<mur.length-1;i++){
+        System.out.println("Tableau des valeurs : \n");
+        /*String res = "[";
+        for (int i=0;i<mur[0].length-1;i++){
             if (i == 6) {
-                res += " - " + round(mur[i - 1]) + ",";
+                res += " - " + round(mur[it][i - 1]) + ",";
             }
-            if (i != 5) res += round(mur[i]) + ",";
-            else res += round(mur[i]);
+            if (i != 5) res += round(mur[it][i]) + ",";
+            else res += round(mur[it][i]);
         }
-        res += round(mur[mur.length - 1]) + " ]";
-        System.out.println(res);
+        res += round(mur[it][mur[0].length - 1]) + " ]";
+        System.out.println(res);*/
+
+        for (int i = 0; i < mur.length; i++) {
+            for (int j = 0; j < mur[0].length; j++) {
+                System.out.print(round(mur[i][j]) + " ");
+            }
+            System.out.print("\n");
+        }
     }
 
     /**
@@ -143,27 +139,39 @@ public class Simulateur {
      */
     private class ThreadSimulation implements Runnable {
         private int position;
-        private double value;
+        private Rdv rdvL;
+        private Rdv rdvR;
+        private int maxIt;
 
-        public ThreadSimulation(int position) {
+        public ThreadSimulation(int position, int iteration, Rdv left, Rdv right) {
             super();
             this.position = position;
-            this.value = 0.0;
+            rdvL = left;
+            rdvR = right;
+            this.maxIt = iteration;
         }
 
         public void run() {
-            while (!done) {
+            double tmp = mur[0][position];
+            double tmpXAvant = 0.0, tmpXApres = 0.0;
+            int it;
+            for (it = 0; it < maxIt; it++) {
+                //System.out.printf("Thread %d started iteration %d\n",position,it);
                 try {
-                    value = update(this.position);
-                    barrierCalcul.await();
-                    reInitMur(this.position, this.value);
-                    barrierReInit.await();
+                    synchronized (this) {
+                        tmpXAvant = (position == 1) ? 110.0 : rdvL.getValueFromLeft(tmp);
+                        rdvL.leftParti();
+                        tmpXApres = (position == 7) ? 20.0 : rdvR.getValueFromRight(tmp);
+                        rdvR.rightParti();
+                        //System.out.printf("Call update(%f,%f,%f,%d,%d)\n",tmp,tmpXAvant,tmpXApres,position,it);
+                        tmp = update(tmp, tmpXAvant, tmpXApres, position, it);
+                        //System.out.println(tmp);
+                    }
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } catch (BrokenBarrierException e) {
                     e.printStackTrace();
                 }
             }
+
         }
     }
 
@@ -173,24 +181,54 @@ public class Simulateur {
     private class Rdv {
         private double alpha;
         private double beta;
-        private int id;
+        private boolean aArrive;
+        private boolean bArrive;
+        private int position;
 
-        public Rdv(int id) {
-            this.id = id;
+        public Rdv(int position) {
+            aArrive = false;
+            bArrive = false;
+            this.position = position;
         }
 
-        synchronized public double getValueFromLeft(double a) {
+        synchronized public double getValueFromLeft(double a) throws InterruptedException {
+            //System.out.printf("##%d Call from method getValueFromLeft\n",position);
             alpha = a;
-            // si l'autre n'est pas arrivé > wait
-            // notify;
+            aArrive();
+            while (!bArrive) {
+                //System.out.printf("##%d wait\n",position);
+                wait();
+            }
+            notify();
             return beta;
         }
 
-        synchronized public double getValueFromRight(double b) {
+        synchronized public double getValueFromRight(double b) throws InterruptedException {
+            //System.out.printf("##%d Call from method getValueFromRight\n",position);
             beta = b;
-            // si l'autre n'est pas arrivé > wait
-            // notifiy
+            bArrive();
+            while (!aArrive) {
+                //System.out.printf("##%d wait\n",position);
+                wait();
+            }
+            notify();
             return alpha;
+        }
+
+        synchronized public void aArrive() {
+            this.aArrive = true;
+        }
+
+        synchronized public void bArrive() {
+            this.bArrive = true;
+        }
+
+        synchronized public void leftParti() {
+            this.aArrive = true;
+        }
+
+        synchronized public void rightParti() {
+            this.bArrive = true;
         }
 
 
@@ -202,21 +240,16 @@ public class Simulateur {
      * @param args
      */
     public static void main(String[] args) {
-        int k = 60;
+        int k = 100000;
         Simulateur simulateur = new Simulateur(k);
         System.out.print("t=0h ->");
 
-        simulateur.affiche();
+        //simulateur.affiche();
         simulateur.debut = new Date();
 
         simulateur.simule();
-        while (!simulateur.done) {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+        simulateur.affiche();
+        simulateur.fin = new Date();
         long diff = simulateur.fin.getTime() - simulateur.debut.getTime();
         LOGGER.log(Level.INFO, "Approximately " + Math.round((simulateur.it * DT) / 3600) + " hours simulated in " + diff + "ms");
 
