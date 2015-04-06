@@ -15,12 +15,12 @@ public class Simulateur {
     private static final Logger LOGGER = Logger.getLogger("Simulateur");
     private Double[][] mur;
     private Double[] C;
-    private boolean done = false;
+    private boolean done[] = {false, false, false, false, false, false, false};
     private Date debut;
     private Date fin;
     private int it = 0;
     private int max;
-    public static final double DT = 1.0;
+    public static final double DT = 600.0;
     public static final double DX = 0.04;
 
     /**
@@ -51,6 +51,10 @@ public class Simulateur {
             C[i] = constanteIso;
         }
         System.out.println("C1 : " + constanteMur + " C2 : " + constanteIso);
+    }
+
+    private boolean isDone() {
+        return done[0] && done[1] && done[2] && done[3] && done[4] && done[5] && done[6];
     }
 
     /**
@@ -84,7 +88,16 @@ public class Simulateur {
      * Lance la simulation
      */
     public void simule() {
+        debut = new Date();
         createThreads(9);
+        while (!isDone()) {
+            try {
+                Thread.sleep(5);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        fin = new Date();
     }
 
     /**
@@ -95,7 +108,7 @@ public class Simulateur {
     private void createThreads(int nb){
         Rdv[] listRdv = new Rdv[8];
         for (int i = 0; i < listRdv.length; i++) {
-            listRdv[i] = new Rdv(i);
+            listRdv[i] = new Rdv();
         }
         for (int j = 1; j < nb - 1; j++) {
             new Thread(new ThreadSimulation(j, this.max, listRdv[j - 1], listRdv[j])).start();
@@ -114,16 +127,6 @@ public class Simulateur {
      */
     public void affiche() {
         System.out.println("Tableau des valeurs : \n");
-        /*String res = "[";
-        for (int i=0;i<mur[0].length-1;i++){
-            if (i == 6) {
-                res += " - " + round(mur[it][i - 1]) + ",";
-            }
-            if (i != 5) res += round(mur[it][i]) + ",";
-            else res += round(mur[it][i]);
-        }
-        res += round(mur[it][mur[0].length - 1]) + " ]";
-        System.out.println(res);*/
 
         for (int i = 0; i < mur.length; i++) {
             for (int j = 0; j < mur[0].length; j++) {
@@ -131,6 +134,18 @@ public class Simulateur {
             }
             System.out.print("\n");
         }
+    }
+
+    /**
+     * Methode qui affiche l'etat it du mur
+     */
+    public void affiche(int k) {
+        System.out.println("Tableau des valeurs : \n");
+
+        for (int j = 0; j < mur[k].length; j++) {
+            System.out.print(round(mur[k][j]) + " ");
+        }
+        System.out.print("\n");
     }
 
     /**
@@ -171,6 +186,8 @@ public class Simulateur {
                     e.printStackTrace();
                 }
             }
+            //System.out.printf("Thread %d DONE\n",position);
+            done[position - 1] = true;
 
         }
     }
@@ -183,20 +200,16 @@ public class Simulateur {
         private double beta;
         private boolean aArrive;
         private boolean bArrive;
-        private int position;
 
-        public Rdv(int position) {
+        public Rdv() {
             aArrive = false;
             bArrive = false;
-            this.position = position;
         }
 
         synchronized public double getValueFromLeft(double a) throws InterruptedException {
-            //System.out.printf("##%d Call from method getValueFromLeft\n",position);
             alpha = a;
             aArrive();
             while (!bArrive) {
-                //System.out.printf("##%d wait\n",position);
                 wait();
             }
             notify();
@@ -204,11 +217,9 @@ public class Simulateur {
         }
 
         synchronized public double getValueFromRight(double b) throws InterruptedException {
-            //System.out.printf("##%d Call from method getValueFromRight\n",position);
             beta = b;
             bArrive();
             while (!aArrive) {
-                //System.out.printf("##%d wait\n",position);
                 wait();
             }
             notify();
@@ -242,14 +253,17 @@ public class Simulateur {
     public static void main(String[] args) {
         int k = 100000;
         Simulateur simulateur = new Simulateur(k);
-        System.out.print("t=0h ->");
 
-        //simulateur.affiche();
-        simulateur.debut = new Date();
-
+        simulateur.affiche(0);
         simulateur.simule();
-        simulateur.affiche();
-        simulateur.fin = new Date();
+        while (!simulateur.isDone()) {
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        simulateur.affiche(k - 1);
         long diff = simulateur.fin.getTime() - simulateur.debut.getTime();
         LOGGER.log(Level.INFO, "Approximately " + Math.round((simulateur.it * DT) / 3600) + " hours simulated in " + diff + "ms");
 
