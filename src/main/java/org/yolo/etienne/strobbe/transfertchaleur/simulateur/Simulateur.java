@@ -168,6 +168,35 @@ public class Simulateur {
     }
 
     /**
+     * Classe Rendez vous
+     */
+    private class Rdv {
+        private double alpha;
+        private double beta;
+        private int id;
+
+        public Rdv(int id) {
+            this.id = id;
+        }
+
+        synchronized public double getValueFromLeft(double a) {
+            alpha = a;
+            // si l'autre n'est pas arrivé > wait
+            // notify;
+            return beta;
+        }
+
+        synchronized public double getValueFromRight(double b) {
+            beta = b;
+            // si l'autre n'est pas arrivé > wait
+            // notifiy
+            return alpha;
+        }
+
+
+    }
+
+    /**
      * Main de test
      *
      * @param args
