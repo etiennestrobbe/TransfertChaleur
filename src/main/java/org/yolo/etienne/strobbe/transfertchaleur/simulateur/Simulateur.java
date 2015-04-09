@@ -220,7 +220,7 @@ public class Simulateur {
      * @param args
      */
     public static void main(String[] args) {
-        int k = 60;
+        int k = 100000;
         Simulateur simulateur = new Simulateur(k);
 
         //simulateur.affiche(0);
@@ -232,7 +232,7 @@ public class Simulateur {
                 e.printStackTrace();
             }
         }
-        simulateur.affiche();
+        //simulateur.affiche();
         long diff = simulateur.fin.getTime() - simulateur.debut.getTime();
         LOGGER.log(Level.INFO, "Approximately " + Math.round((simulateur.it * DT) / 3600) + " hours simulated in " + diff + "ms");
 
