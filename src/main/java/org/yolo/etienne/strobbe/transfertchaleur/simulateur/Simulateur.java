@@ -62,12 +62,12 @@ public class Simulateur {
      * du mur au point donne
      *
      * @param pos le lieu a mettre a jour
+     * @param it l'iteration en cours
+     * @param tmp l'ancienne valeur en x
+     * @param avant l'ancienne valeur en x-1
+     * @param apres l'ancienne valeur en x+1
      * @return la nouvelle temperature calculee
      */
-    public Double update(int pos) {
-        return 0.0;///mur[pos] + C[pos + 1] * mur[pos + 1] + C[pos - 1] * mur[pos - 1] - (C[pos + 1] + C[pos - 1]) * mur[pos];
-    }
-
     public double update(double tmp, double avant, double apres, int pos, int it) {
         double value = tmp + C[pos + 1] * apres + C[pos - 1] * avant - (C[pos + 1] + C[pos - 1]) * tmp;
         mur[it][pos] = value;
@@ -75,21 +75,13 @@ public class Simulateur {
     }
 
     /**
-     * Methode qui permet de reinitialiser
-     * les valeurs des temperatures des murs
-     * apres la fin des calculs
-     * (on fait T(x,t) = T(x,t+1) )
-     */
-    private void reInitMur(int pos,double newValue) {
-        // mur[pos] = newValue;
-    }
-
-    /**
      * Lance la simulation
+     * - creation des threads
+     * - calcul du temps d'execution
      */
     public void simule() {
         debut = new Date();
-        createThreads(9);
+        createThreads();
         while (!isDone()) {
             try {
                 Thread.sleep(5);
@@ -102,10 +94,10 @@ public class Simulateur {
 
     /**
      * Creer les differents threads necessaires pour faires les calculs
+     * on associe a chaque thread les deux objets Rdv necessaires
      *
-     * @param nb
      */
-    private void createThreads(int nb){
+    private void createThreads() {
         Rdv rdv1 = new Rdv();
         Rdv rdv2 = new Rdv();
         for (int j = 1; j < 8; j++) {
@@ -123,7 +115,7 @@ public class Simulateur {
     }
 
     /**
-     * Methode qui affiche l'etat it du mur
+     * Methode qui affiche l'etat du mur
      */
     public void affiche() {
         System.out.println("Tableau des valeurs : \n");
@@ -160,6 +152,14 @@ public class Simulateur {
         private int maxIt;
         private boolean through = false;
 
+        /**
+         * Constructeur
+         *
+         * @param position  representant la tranche du mur
+         * @param iteration le nombre max d'iterations
+         * @param left      l'objet Rdv a gauche du thread
+         * @param right     l'objet Rdv a droite du thread
+         */
         public ThreadSimulation(int position, int iteration, Rdv left, Rdv right) {
             super();
             this.position = position;
@@ -191,19 +191,28 @@ public class Simulateur {
     }
 
     /**
-     * Classe Rendez vous
+     * Classe interne Rendez vous
      */
     private class Rdv {
         private double alpha;
         private double beta;
         private int enAttente;
 
+        /**
+         * Constructeur
+         */
         public Rdv() {
             alpha = -1.0;
             beta = -1.0;
             enAttente = 0;
         }
 
+        /**
+         * Methode qui permet de faire un echange entre
+         *  deux threads qui prennent rendez vous.
+         * @param temp la valeur qu'un thread echange
+         * @return la valeur que l'autre thread a donne
+         */
         public synchronized double echange(double temp) {
             if (enAttente == 0) {
                 enAttente = 1;
