@@ -158,6 +158,7 @@ public class Simulateur {
         private Rdv rdvL;
         private Rdv rdvR;
         private int maxIt;
+        private boolean through = false;
 
         public ThreadSimulation(int position, int iteration, Rdv left, Rdv right) {
             super();
@@ -172,6 +173,14 @@ public class Simulateur {
             double tmpXAvant = 0.0, tmpXApres = 0.0;
             int it;
             for (it = 0; it < maxIt; it++) {
+                if (!through) {
+                    if (position == 7) {
+                        if ((int) tmp == 21) {
+                            System.out.printf("Dernière tranche change de température -> time=%d s\n", Math.round((it * DT)));
+                            through = true;
+                        }
+                    }
+                }
                 tmpXAvant = (position == 1) ? 110.0 : rdvL.echange(tmp);
                 tmpXApres = (position == 7) ? 20.0 : rdvR.echange(tmp);
                 if (position != 0 && position != 8) tmp = update(tmp, tmpXAvant, tmpXApres, position, it);
@@ -234,7 +243,7 @@ public class Simulateur {
         }
         //simulateur.affiche();
         long diff = simulateur.fin.getTime() - simulateur.debut.getTime();
-        LOGGER.log(Level.INFO, "Approximately " + Math.round((simulateur.it * DT) / 3600) + " hours simulated in " + diff + "ms");
+        LOGGER.log(Level.INFO, "Approximately " + Math.round((k * DT) / 3600) + " hours simulated in " + diff + "ms");
 
 
     }
