@@ -106,12 +106,12 @@ public class Simulateur {
      * @param nb
      */
     private void createThreads(int nb){
-        Rdv[] listRdv = new Rdv[8];
-        for (int i = 0; i < listRdv.length; i++) {
-            listRdv[i] = new Rdv();
-        }
-        for (int j = 1; j < nb - 1; j++) {
-            new Thread(new ThreadSimulation(j, this.max, listRdv[j - 1], listRdv[j])).start();
+        Rdv rdv1 = new Rdv();
+        Rdv rdv2 = new Rdv();
+        for (int j = 1; j < 8; j++) {
+            new ThreadSimulation(j, this.max, rdv1, rdv2).start();
+            rdv1 = rdv2;
+            rdv2 = new Rdv();
         }
     }
 
@@ -153,7 +153,7 @@ public class Simulateur {
      * Thread qui calcul la nouvelle temperature a un point donne
      * ce Thread est synchronise par une barriere
      */
-    private class ThreadSimulation implements Runnable {
+    private class ThreadSimulation extends Thread {
         private int position;
         private Rdv rdvL;
         private Rdv rdvR;
@@ -172,22 +172,10 @@ public class Simulateur {
             double tmpXAvant = 0.0, tmpXApres = 0.0;
             int it;
             for (it = 0; it < maxIt; it++) {
-                //System.out.printf("Thread %d started iteration %d\n",position,it);
-                try {
-                    synchronized (this) {
-                        tmpXAvant = (position == 1) ? 110.0 : rdvL.getValueFromLeft(tmp);
-                        rdvL.leftParti();
-                        tmpXApres = (position == 7) ? 20.0 : rdvR.getValueFromRight(tmp);
-                        rdvR.rightParti();
-                        //System.out.printf("Call update(%f,%f,%f,%d,%d)\n",tmp,tmpXAvant,tmpXApres,position,it);
-                        tmp = update(tmp, tmpXAvant, tmpXApres, position, it);
-                        //System.out.println(tmp);
-                    }
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                tmpXAvant = (position == 1) ? 110.0 : rdvL.echange(tmp);
+                tmpXApres = (position == 7) ? 20.0 : rdvR.echange(tmp);
+                if (position != 0 && position != 8) tmp = update(tmp, tmpXAvant, tmpXApres, position, it);
             }
-            //System.out.printf("Thread %d DONE\n",position);
             done[position - 1] = true;
 
         }
@@ -199,50 +187,30 @@ public class Simulateur {
     private class Rdv {
         private double alpha;
         private double beta;
-        private boolean aArrive;
-        private boolean bArrive;
+        private int enAttente;
 
         public Rdv() {
-            aArrive = false;
-            bArrive = false;
+            alpha = -1.0;
+            beta = -1.0;
+            enAttente = 0;
         }
 
-        synchronized public double getValueFromLeft(double a) throws InterruptedException {
-            alpha = a;
-            aArrive();
-            while (!bArrive) {
-                wait();
+        public synchronized double echange(double temp) {
+            if (enAttente == 0) {
+                enAttente = 1;
+                alpha = temp;
+                try {
+                    wait();
+                } catch (InterruptedException e) {
+                }
+                return beta;
+            } else {
+                enAttente = 0;
+                beta = temp;
+                notify();
+                return alpha;
             }
-            notify();
-            return beta;
         }
-
-        synchronized public double getValueFromRight(double b) throws InterruptedException {
-            beta = b;
-            bArrive();
-            while (!aArrive) {
-                wait();
-            }
-            notify();
-            return alpha;
-        }
-
-        synchronized public void aArrive() {
-            this.aArrive = true;
-        }
-
-        synchronized public void bArrive() {
-            this.bArrive = true;
-        }
-
-        synchronized public void leftParti() {
-            this.aArrive = true;
-        }
-
-        synchronized public void rightParti() {
-            this.bArrive = true;
-        }
-
 
     }
 
@@ -252,7 +220,7 @@ public class Simulateur {
      * @param args
      */
     public static void main(String[] args) {
-        int k = 100;
+        int k = 60;
         Simulateur simulateur = new Simulateur(k);
 
         //simulateur.affiche(0);
