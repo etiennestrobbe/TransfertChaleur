@@ -1,6 +1,8 @@
 # Created by https://www.gitignore.io
 
 ### Java ###
+main
+*.o
 *.class
 
 # Mobile Tools for Java (J2ME)
