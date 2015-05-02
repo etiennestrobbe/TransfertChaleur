@@ -4,110 +4,17 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
-
-
-/* Definition de la FIFO */
-struct def_fifo{
-	pthread_cond_t *condition;
-	pthread_mutex_t *mutex;
-	enum {EMPTY,FULL} state;
-	double value;
-	int id;
-};
-
-typedef struct def_fifo *Fifo;
-
-static int gid = 0;
-
-/* Constructeur et destructeur */
-Fifo fifo_allocate()
-{
-  Fifo q;
-
-  q = malloc(sizeof(struct def_fifo));
-  q->mutex = malloc(sizeof(pthread_mutex_t));
-  pthread_mutex_init(q->mutex, NULL);
-  q->condition = malloc(sizeof(pthread_cond_t));
-  pthread_cond_init(q->condition, NULL);
-  q->value = 20.0;
-  q->state = FULL;
-  q->id = gid++;
-
-  return q;
-}
-
-void fifo_free(Fifo q)
-{
-	free(q->mutex);
-	free(q->condition);
-	free(q);
-}
-
-/* Definition d'une structure pour le parametre des threads */
+#include "util.h"
 
 
 double DT = 600.0;
 double DX = 0.04;
 double C1;
 double C2;
-double matrice[100000][7];
+double matrice[100][7];
+int found = 0;
 
-struct def_param{
-	Fifo lire_gauche;
-	Fifo lire_droite;
-	Fifo ecrire_droite;
-	Fifo ecrire_gauche;
-	int iteration;
-	int id;
-};
-
-typedef struct def_param *Param_Fifo;
-
-void param_free(Param_Fifo param){
-	free(param->lire_gauche);
-	free(param->lire_droite);
-	free(param->ecrire_droite);
-	free(param->ecrire_gauche);
-	free(param);
-}
-
-
-
-
-/* Ajouter un element */
-void fifo_put(Fifo q, const double t)
-{
-	pthread_mutex_lock(q->mutex);
-	while(q->state == FULL){
-		pthread_cond_wait(q->condition,q->mutex);
-	}
-	q->value = t;
-	q->state = FULL;
-	
-	pthread_mutex_unlock(q->mutex);
-	pthread_cond_signal(q->condition);
-}
-
-/* Retirer un element */
-double fifo_get(const Fifo q)
-{
-	pthread_mutex_lock(q->mutex);
-	while(q->state == EMPTY){
-		pthread_cond_wait(q->condition,q->mutex);
-	}
-	q->state = EMPTY;
-	
-	pthread_mutex_unlock(q->mutex);
-	pthread_cond_signal(q->condition);
-	return q->value;
-}
-
-/* Impression de la fifo */
-void fifo_print(const Fifo q)
-{
-	printf("{Fifo [value=%f]} \n", q->value);
-}
-
+/* Methode qui fait le calcul des nouvelles temperatures */
 double calcul(double actuelle, double avant, double apres, int pos,int it){
 	/* 3 cas possible */
 	double nouvelle;
@@ -127,54 +34,47 @@ double calcul(double actuelle, double avant, double apres, int pos,int it){
 	return nouvelle;
 }
 
+/* Methode qui fait le calcul pour les threads internes */
 void *boucleCalculGeneral(void *arg){
-	
-	double value;
+	double value = 20.0;
 	int it=0;
-
-	//TODO mettre l'iteration max
 	Param_Fifo a = ((Param_Fifo ) arg);
-	while(it< a->iteration) {
-
-		/* Debut du calcul */
+	while(it++< a->iteration) {
 		double b = fifo_get((a)->lire_gauche);
 		double c = fifo_get((a)->lire_droite);
-		
 		value = calcul(value,b,c,a->id,it);
 		fifo_put((a)->ecrire_gauche,value);
 		fifo_put((a)->ecrire_droite,value);
-		it++;
 	}
 	return 0;
 }
 
-
+/* Methode qui fait le calcul pour le thread externe gauche */
 void *boucleCalculGauche(void *arg){
-	double value;
+	double value = 20.0;
 	int it = 0;
-
-	//TODO mettre l'iteration max
 	Param_Fifo a = ((Param_Fifo) arg);
-	while(it< a->iteration) {
-		/* Debut du calcul */
+	while(it++< a->iteration) {
 		value = calcul(value,110.0,fifo_get((a)->lire_droite),a->id,it);
 		fifo_put((a)->ecrire_droite,value);
-		it++;
 	}
 	return 0;
 }
 
+/* Methode qui fait le calcul pour le thread externe droite */
 void *boucleCalculDroite(void *arg){
-	double value;
+	double value = 20.0;
 	int it=0;
-
-	//TODO mettre l'iteration max
 	Param_Fifo a = ((Param_Fifo ) arg);
-	while(it< a->iteration) {
-		/* Debut du calcul */
+	while(it++< a->iteration) {
+		if(found == 0){
+			if(value >  21.0){
+				found = 1;
+				printf("Température changée apres %d itérations (~%f heures)\n",it,(it*DT)/3600.0);
+			}
+		}
 		value = calcul(value,fifo_get((a)->lire_gauche),20.0,a->id,it);
 		fifo_put((a)->ecrire_gauche,value);
-		it++;
 	}
 	return 0;
 }
@@ -184,21 +84,25 @@ void init_constantes(){
     printf("Les constantes : C1=%f | C2=%f\n",C1,C2);
 }
 
+void init_threads(){
+	
+}
+
 
 int main(){
 	init_constantes();
-	int it = 100000;
+	int it = 100;
+	printf("DT=%f, DX=%f, nb iterations=%d\n",DT,DX,it);
 	float temps;
     clock_t t1, t2;
-	
-	
 	
 	/* initialisation des threads et des différentes fifos */
 	
 	t1 = clock();
 	pthread_t *threads[7];
-	Param_Fifo *list_param[5];
+	Param_Fifo list_param[7];
 	Fifo *ecrire_gauche,*lire_gauche;
+	/* Premier thread (celui correspondant a la tranche, que l'on calcul, la plus a gauche) */
 	pthread_t first;
 	Param_Fifo first_param = malloc(sizeof(struct def_param));
 	first_param->lire_droite = fifo_allocate();
@@ -208,6 +112,7 @@ int main(){
 	threads[0] = &first;
 	first_param->iteration = it;
 	first_param->id = 0;
+	list_param[0] = first_param;
 	pthread_create(&first, NULL, boucleCalculGauche, first_param);
 	
 	for(int i=1;i<6;i++){
@@ -223,9 +128,9 @@ int main(){
 		pthread_create(threads[i], NULL, boucleCalculGeneral, param);
 		ecrire_gauche = &param->lire_droite;
 		lire_gauche = &param->ecrire_droite;
-		list_param[i-1] = &param;				
+		list_param[i] = param;				
 	}
-	
+	/* Dernier thread (celui correspondant a la tranche, que l'on calcul, la plus a droite) */
 	pthread_t last;
 	Param_Fifo last_param = malloc(sizeof(struct def_param));
 	last_param->lire_gauche = *lire_gauche;
@@ -233,33 +138,21 @@ int main(){
 	threads[6] = &last;
 	last_param->iteration = it;
 	last_param->id = 6;
+	list_param[6] = last_param;
 	pthread_create(&last, NULL, boucleCalculDroite, last_param);
 	
-	// attente du pere
 	for(int i=0;i<7;i++){
 		pthread_join(*threads[i], NULL);
 	}
 	t2 = clock();
 	
 	// liberation de la mémoire
-	free(first_param->lire_droite);
-	free(first_param->ecrire_droite);
-	free(first_param);
-	free(last_param);
-	for(int i=0;i<5;i++){
-		//param_free(*list_param[i]);
-	}/*
-	pthread_t th1,th2;
-	Fifo fifo1 = fifo_allocate();
-	
-	pthread_create(&th1, NULL, test_get, &fifo1);
-	pthread_create(&th2, NULL, test_put, &fifo1);
-	
-	pthread_join(th1,NULL);
-	pthread_join(th2,NULL);*/
-
-	for(int i=0;i<it;i++){
-		printf("[ 110 ");
+	for(int i=0;i<7;i++){
+		param_free(list_param[i]);
+	}
+	printf("[ 0 : 110 20 20 20 20 20 - 20 20 20 20 ]\n");
+	for(int i=1;i<it;i++){
+		printf("[ %d : 110 ",i);
 		for(int j=0;j<7;j++){
 			if(j == 4) printf("%d - ",(int)matrice[i][j]);
 			printf("%d ",(int)matrice[i][j]);
@@ -268,6 +161,6 @@ int main(){
 	}
 	
 	temps = (float)(t2-t1)/CLOCKS_PER_SEC;
-    printf("temps = %f\n", temps);
+    printf("temps d'execution = %f sec.\n", temps);
 	return 0;
 }
